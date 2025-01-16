@@ -32,6 +32,7 @@ USING_NS_CC;
 float SCROLL_INTERVAL = 100.00;
 float START_X = 480.00;
 float START_Y = 550.00;
+float SHIFT = 600;
 
 std::string ANIMATION_MOVE_DOWN = "moveDown",
             ANIMATION_MOVE_UP = "moveUp",
@@ -60,12 +61,12 @@ bool HelloWorld::init()
 {
     //////////////////////////////
     // 1. super init first
-    if ( !Scene::initWithPhysics() )
+    if ( !Scene::init() )
     {
         return false;
     }
 
-    this->_physicsWorld->setGravity(Vec2(0, 0));
+    //this->_physicsWorld->setGravity(Vec2(0, 0));
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
@@ -102,10 +103,22 @@ bool HelloWorld::init()
     // 3. add your codes below...
 
     // add a label shows "Hello World"
-    // create and initialize a label
+    // create and initialize a label std::to_string((int)var)
+    std::string labelStr = std::to_string((int)this->unitsCount);
+    auto label = Label::createWithTTF("Sprites #", "fonts/arial.ttf", 62);
+    label->setPosition(Vec2(origin.x + visibleSize.width / 2,
+        origin.y + visibleSize.height - label->getContentSize().height));
 
+    this->unitsCountLabel = Label::createWithTTF(labelStr, "fonts/arial.ttf", 62);
+    this->unitsCountLabel->setPosition(Vec2(origin.x + visibleSize.width / 2 + label->getContentSize().width,
+        origin.y + visibleSize.height - label->getContentSize().height));
+
+    // add the label as a child to this layer
+    this->addChild(label, 3);
+
+    this->addChild(this->unitsCountLabel, 3);
     /*
-    auto label = Label::createWithTTF("Hello World", "fonts/Marker Felt.ttf", 24);
+    
     if (label == nullptr)
     {
         problemLoading("'fonts/Marker Felt.ttf'");
@@ -135,6 +148,9 @@ bool HelloWorld::init()
         // add the sprite as a child to this layer
         //this->addChild(sprite, 0);
     }*/
+
+    this->addUnitPosX = START_X;
+    this->addUnitPosY = START_Y + SHIFT;
 
     auto map = TMXTiledMap::create("strategy_map.tmx");
     //auto map = TMXTiledMap::create("big_map/map_100.tmx");
@@ -220,48 +236,6 @@ void HelloWorld::addStartUnitsAndBuildings() {
     animationFrames[ANIMATION_MOVE_RIGHT] = framesMoveRight;
     animationFrames[ANIMATION_SPEARGOBLIN_MOVE_RIGHT] = framesSpearGoblinMoveRight;
 
-    /*
-    auto textureAtlas = TextureAtlas::createWithTexture(texture, 35);
-    size_t i = 0;
-    for (size_t col = 0; col < 5; ++col) {
-        for (size_t row = 0; row < 7; ++row) {
-            V3F_C4B_T2F_Quad quard;
-            float x = col * 32;
-            float y = row * 32;
-
-            quard.bl.vertices.x = x;
-            quard.bl.vertices.y = y;
-            quard.bl.vertices.z = 0.0f;
-            quard.bl.texCoords.u = 0.0f;
-            quard.bl.texCoords.v = 0.0f;
-
-            quard.br.vertices.x = x + 32;
-            quard.br.vertices.y = y;
-            quard.br.vertices.z = 0.0f;
-            quard.br.texCoords.u = 1.0f;
-            quard.br.texCoords.v = 0.0f;
-
-            quard.tl.vertices.x = x;
-            quard.tl.vertices.y = y + 32;
-            quard.tl.vertices.z = 0.0f;
-            quard.tl.texCoords.u = 0.0f;
-            quard.tl.texCoords.v = 1.0f;
-
-            quard.tr.vertices.x = x + 32;
-            quard.tr.vertices.y = y + 32;
-            quard.tr.vertices.z = 0.0f;
-            quard.tr.texCoords.u = 1.0f;
-            quard.tr.texCoords.v = 1.0f;
-            //log("capacity: %i", textureAtlas->getCapacity());
-            //log("index: %i", i);
-            textureAtlas->insertQuad(&quard, i);
-            ++i;
-        }
-    }
-    textureAtlas->setDirty(false);
-
-    auto sprite = Sprite::createWithTexture(textureAtlas->getTexture());
-    */
     auto sprite = Sprite::createWithSpriteFrame(frame1);
     if (sprite == nullptr)
     {
@@ -394,7 +368,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, Event* event)
         //scheduler->schedule(CC_CALLBACK_0(HelloWorld::addUnitAndMove, this), )
         //scheduler->performFunctionInCocosThread(CC_CALLBACK_0(HelloWorld::addUnitAndMove, this));
         this->schedule(CC_SCHEDULE_SELECTOR(HelloWorld::addUnitAndMove), 0.002f);
-        //std::thread thr_add(&HelloWorld::addUnitAndMove, this);
+        //std::thread thr_add(&HelloWorld::addUnitAndMoveThread, this);
         //log("Stop spawn thread");
         //thr_add.detach();
         break;
@@ -424,7 +398,7 @@ void HelloWorld::onKeyReleased(EventKeyboard::KeyCode keyCode, Event* event)
     if (this->keyPressed[cocos2d::EventKeyboard::KeyCode::KEY_SPACE] == false) {
         this->isSpawnUnits = false;
         this->addUnitPosX = START_X;
-        this->addUnitPosY = START_Y + 600.00;
+        this->addUnitPosY = START_Y + SHIFT;
     }
     this->unscheduleAllCallbacks();
 }
@@ -438,71 +412,96 @@ bool HelloWorld::onContactBegin(cocos2d::PhysicsContact& contact) {
     return true;
 }
 
-void HelloWorld::addUnitAndMove(float dt) {
-    //if (this->isSpawnUnits == false) {
-        //this->isSpawnUnits = true;
-        //while (this->isSpawnUnits == true) {
-        log("add new unit");
-        auto sprite = Sprite::createWithSpriteFrame(*animationFrames[ANIMATION_MOVE_RIGHT].begin());
-        //auto sprite2 = Sprite::createWithSpriteFrame(*animationFrames[ANIMATION_SPEARGOBLIN_MOVE_RIGHT].begin());
-        log("sprite created");
-        if (sprite == nullptr)
-        {
-            problemLoading("'./images/MiniWorldSprites/Characters/Monsters/Orcs/FarmerGoblin.png'");
+void HelloWorld::addUnitAndMoveThread() {
+    if (this->isSpawnUnits == false) {
+        this->isSpawnUnits = true;
+        while (this->isSpawnUnits == true) {
+            log("add new unit");
+            auto sprite = Sprite::createWithSpriteFrame(*animationFrames[ANIMATION_MOVE_RIGHT].begin());
+            //auto sprite2 = Sprite::createWithSpriteFrame(*animationFrames[ANIMATION_SPEARGOBLIN_MOVE_RIGHT].begin());
+            log("sprite created");
+            if (sprite == nullptr)
+            {
+                problemLoading("'./images/MiniWorldSprites/Characters/Monsters/Orcs/FarmerGoblin.png'");
+            }
+            else
+            {
+                log("set sprite coords");
+                //sprite->setTextureRect(Rect(0.00, 0.00, 32.00, 32.00));
+                // position the sprite on the center of the screen
+                sprite->setPosition(Vec2(this->addUnitPosX, this->addUnitPosY));
+                this->addUnitPosY -= 16.00;
+                sprite->setName("playerUnit");
+
+                auto spriteBody = PhysicsBody::createBox(sprite->getContentSize(), PhysicsMaterial(0, 0, 0));
+                //spriteBody->setCollisionBitmask(0);
+               // spriteBody->setContactTestBitmask(true);
+                sprite->setPhysicsBody(spriteBody);
+
+                this->addChild(sprite, 1);
+                this->moveUnitTo(sprite, 2500, this->addUnitPosY);
+
+                ++this->unitsCount;
+                this->unitsCountLabel->setString(std::to_string((int)this->unitsCount));
+                //++this->unitsCount;
+                log("added unit, units number: %i", this->unitsCount);
+                //});
+                std::this_thread::sleep_for(std::chrono::milliseconds((int)SCROLL_INTERVAL));
+            }
         }
-        else
-        {
-            log("set sprite coords");
-            //sprite->setTextureRect(Rect(0.00, 0.00, 32.00, 32.00));
-            // position the sprite on the center of the screen
-            sprite->setPosition(Vec2(this->addUnitPosX, this->addUnitPosY));
-            this->addUnitPosY -= 16.00;
-            sprite->setName("playerUnit");
-            
-            auto spriteBody = PhysicsBody::createBox(sprite->getContentSize(), PhysicsMaterial(0, 0, 0));
-            //spriteBody->setCollisionBitmask(0);
-           // spriteBody->setContactTestBitmask(true);
-            sprite->setPhysicsBody(spriteBody);
-
-            this->addChild(sprite, 1);
-            this->moveUnitTo(sprite, 2500, this->addUnitPosY);
-
-            //sprite2->setPosition(Vec2(this->addUnitPosX, this->addUnitPosY));
-
-            //this->addUnitPosY -= 32.00;
-           
-            //sprite2->setName("playerUnit1");
-            //auto spriteBody2 = PhysicsBody::createBox(sprite2->getContentSize(), PhysicsMaterial(0, 0, 0));
-            //sprite2->setPhysicsBody(spriteBody2);
-
-            //sprite->setAtlasIndex(8);
-            // add the sprite as a child to this layer
-            //log("add sprite to the map");
-            //Director::getInstance()->getScheduler()->performFunctionInCocosThread([] {
-            
-            //this->addChild(sprite2, 1);
-
-            //log("move unit");
-            
-            //this->moveUnitTo(sprite2, 2500, this->addUnitPosY);
-
-            ++this->unitsCount;
-            //++this->unitsCount;
-            log("added unit, units number: %i", this->unitsCount);
-            //});
-            //std::this_thread::sleep_for(std::chrono::milliseconds(SCROLL_INTERVAL));
-        }
-        //}
-    //}
+    }
 }
 
-void HelloWorld::startScroll() {
-    if (this->isScroll == false) {
-        this->isScroll = true;
-        //while (this->isScroll == true) {
-            //this->moveScreen();
-            //std::this_thread::sleep_for(std::chrono::milliseconds(SCROLL_INTERVAL));
-        //}
+void HelloWorld::addUnitAndMove(float dt) {
+    log("add new unit");
+    auto sprite = Sprite::createWithSpriteFrame(*animationFrames[ANIMATION_MOVE_RIGHT].begin());
+    //auto sprite2 = Sprite::createWithSpriteFrame(*animationFrames[ANIMATION_SPEARGOBLIN_MOVE_RIGHT].begin());
+    log("sprite created");
+    if (sprite == nullptr)
+    {
+        problemLoading("'./images/MiniWorldSprites/Characters/Monsters/Orcs/FarmerGoblin.png'");
+    }
+    else
+    {
+        log("set sprite coords x: %f", this->addUnitPosX, " y: %f", this->addUnitPosY);
+        //sprite->setTextureRect(Rect(0.00, 0.00, 32.00, 32.00));
+        // position the sprite on the center of the screen
+        sprite->setPosition(Vec2(this->addUnitPosX, this->addUnitPosY));
+        this->addUnitPosY -= 16.00;
+        sprite->setName("playerUnit");
+            
+        //auto spriteBody = PhysicsBody::createBox(sprite->getContentSize(), PhysicsMaterial(0, 0, 0));
+        //spriteBody->setCollisionBitmask(0);
+        // spriteBody->setContactTestBitmask(true);
+        //sprite->setPhysicsBody(spriteBody);
+
+        this->addChild(sprite, 1);
+        this->moveUnitTo(sprite, 2500, this->addUnitPosY);
+
+        //sprite2->setPosition(Vec2(this->addUnitPosX, this->addUnitPosY));
+
+        //this->addUnitPosY -= 32.00;
+           
+        //sprite2->setName("playerUnit1");
+        //auto spriteBody2 = PhysicsBody::createBox(sprite2->getContentSize(), PhysicsMaterial(0, 0, 0));
+        //sprite2->setPhysicsBody(spriteBody2);
+
+        //sprite->setAtlasIndex(8);
+        // add the sprite as a child to this layer
+        //log("add sprite to the map");
+        //Director::getInstance()->getScheduler()->performFunctionInCocosThread([] {
+            
+        //this->addChild(sprite2, 1);
+
+        //log("move unit");
+            
+        //this->moveUnitTo(sprite2, 2500, this->addUnitPosY);
+
+        ++this->unitsCount;
+        this->unitsCountLabel->setString(std::to_string((int)this->unitsCount));
+        //++this->unitsCount;
+        log("added unit, units number: %i", this->unitsCount);
+        //});
     }
 }
 

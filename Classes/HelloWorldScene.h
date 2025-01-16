@@ -38,6 +38,7 @@ private:
     int addUnitPosX = 0;
     int addUnitPosY = 0;
     size_t unitsCount = 0;
+    cocos2d::Label* unitsCountLabel;
     std::map<cocos2d::EventKeyboard::KeyCode, bool> keyPressed;
     std::vector<Node*> selectedUnits;
     std::map<std::string, cocos2d::Vector<cocos2d::SpriteFrame*>> animationFrames;
@@ -53,12 +54,12 @@ public:
     virtual void onKeyReleased(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
     virtual bool onContactBegin(cocos2d::PhysicsContact& contact);
     virtual void addStartUnitsAndBuildings();
-    virtual void startScroll();
     virtual void moveScreen(float dt);
     // a selector callback
     void menuCloseCallback(cocos2d::Ref* pSender);
     void removeSelections();
     void moveUnitTo(Node*, float x, float y);
+    void addUnitAndMoveThread();
     void addUnitAndMove(float dt);
     // implement the "static create()" method manually
     CREATE_FUNC(HelloWorld);
