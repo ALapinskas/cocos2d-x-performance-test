@@ -61,12 +61,12 @@ bool HelloWorld::init()
 {
     //////////////////////////////
     // 1. super init first
-    if ( !Scene::init() )
+    if ( !Scene::initWithPhysics() )
     {
         return false;
     }
 
-    //this->_physicsWorld->setGravity(Vec2(0, 0));
+    this->_physicsWorld->setGravity(Vec2(0, 0));
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
@@ -288,7 +288,7 @@ void HelloWorld::onMouseDown(Event* event)
         */
         auto children = this->getChildren();
 
-        for (auto child : children) {
+        for (Node* child : children) {
             if (child->getName() == "playerUnit") {
                 if (child->getBoundingBox().containsPoint(Vec2(x, y))) {
                     log("orc selected!!");
@@ -297,7 +297,7 @@ void HelloWorld::onMouseDown(Event* event)
                     Vec2 centerPos = child->getPosition();
                     centerPos.x -= child->getAnchorPointInPoints().x;
                     centerPos.y -= child->getAnchorPointInPoints().y;
-                    auto node = DrawNode::create();
+                    DrawNode* node = DrawNode::create();
                     cocos2d::Color4F white(1, 1, 1, 1);
                     node->drawRect(Vec2(0, 0), Vec2(32, 0), Vec2(32, 32), Vec2(0, 32), white);
                     node->setPosition(centerPos);
@@ -453,27 +453,27 @@ void HelloWorld::addUnitAndMoveThread() {
 }
 
 void HelloWorld::addUnitAndMove(float dt) {
-    log("add new unit");
+    //log("add new unit");
     auto sprite = Sprite::createWithSpriteFrame(*animationFrames[ANIMATION_MOVE_RIGHT].begin());
     //auto sprite2 = Sprite::createWithSpriteFrame(*animationFrames[ANIMATION_SPEARGOBLIN_MOVE_RIGHT].begin());
-    log("sprite created");
+    //log("sprite created");
     if (sprite == nullptr)
     {
         problemLoading("'./images/MiniWorldSprites/Characters/Monsters/Orcs/FarmerGoblin.png'");
     }
     else
     {
-        log("set sprite coords x: %f", this->addUnitPosX, " y: %f", this->addUnitPosY);
+        //log("set sprite coords x: %f", this->addUnitPosX, " y: %f", this->addUnitPosY);
         //sprite->setTextureRect(Rect(0.00, 0.00, 32.00, 32.00));
         // position the sprite on the center of the screen
         sprite->setPosition(Vec2(this->addUnitPosX, this->addUnitPosY));
         this->addUnitPosY -= 16.00;
         sprite->setName("playerUnit");
             
-        //auto spriteBody = PhysicsBody::createBox(sprite->getContentSize(), PhysicsMaterial(0, 0, 0));
+        auto spriteBody = PhysicsBody::createBox(sprite->getContentSize(), PhysicsMaterial(0, 0, 0));
         //spriteBody->setCollisionBitmask(0);
-        // spriteBody->setContactTestBitmask(true);
-        //sprite->setPhysicsBody(spriteBody);
+        //spriteBody->setContactTestBitmask(true);
+        sprite->setPhysicsBody(spriteBody);
 
         this->addChild(sprite, 1);
         this->moveUnitTo(sprite, 2500, this->addUnitPosY);
