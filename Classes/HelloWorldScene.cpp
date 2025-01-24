@@ -292,16 +292,25 @@ void HelloWorld::onMouseDown(Event* event)
             if (child->getName() == "playerUnit") {
                 if (child->getBoundingBox().containsPoint(Vec2(x, y))) {
                     log("orc selected!!");
-                    this->removeSelections();
+                    
+                    // удаляем рамку, если она уже есть
+                    if (!this->selectedUnits.empty()) {
+                        this->removeSelections();
+                    }
                     AudioEngine::play2d("audio/gruntnogold1.mp3");
-                    Vec2 centerPos = child->getPosition();
-                    centerPos.x -= child->getAnchorPointInPoints().x;
-                    centerPos.y -= child->getAnchorPointInPoints().y;
+                    const Vec2& pos = child->getPosition();
+                    const Vec2& anchor = child->getAnchorPoint();
+
                     DrawNode* node = DrawNode::create();
+                    // устанавливаем размер 32х32
+                    node->setContentSize(cocos2d::Size(32.00f, 32.00f));
+                    node->setAnchorPoint(anchor);
+
                     cocos2d::Color4F white(1, 1, 1, 1);
                     node->drawRect(Vec2(0, 0), Vec2(32, 0), Vec2(32, 32), Vec2(0, 32), white);
-                    node->setPosition(centerPos);
+                    node->setPosition(pos);
                     node->setName("selection");
+                    
                     this->addChild(node, 2);
                     this->selectedUnits.push_back(child);
                     this->selectedUnits.push_back(node);
@@ -551,8 +560,6 @@ void HelloWorld::removeSelections() {
 
 void HelloWorld::moveUnitTo(Node* node, float x, float y) {
     Vec2 currPos = node->getPosition();
-    x += node->getAnchorPointInPoints().x;
-    y += node->getAnchorPointInPoints().y;
     float distance = currPos.distance(Vec2(x, y));
     auto calcAngle = [](Vec2 pos1, Vec2 pos2) { return atan2((pos2.y - pos1.y), (pos2.x - pos1.x)); };
     float angle = calcAngle(currPos, Vec2(x, y));
