@@ -292,7 +292,11 @@ void HelloWorld::onMouseDown(Event* event)
             if (child->getName() == "playerUnit") {
                 if (child->getBoundingBox().containsPoint(Vec2(x, y))) {
                     log("orc selected!!");
-                    
+                    // ≈сли действие уже выполн€етс€
+                    if (child->getActionByTag(1) != nullptr) {
+                        log("do nothing");
+                        return;
+                    }
                     // удал€ем рамку, если она уже есть
                     if (!this->selectedUnits.empty()) {
                         this->removeSelections();
@@ -320,7 +324,6 @@ void HelloWorld::onMouseDown(Event* event)
                     if (this->getChildByName("selection") != nullptr) {
                         for (auto unit : this->selectedUnits) {
                             this->moveUnitTo(unit, x, y);
-
                         }
                     }
                 }
@@ -559,6 +562,10 @@ void HelloWorld::removeSelections() {
 }
 
 void HelloWorld::moveUnitTo(Node* node, float x, float y) {
+    // если спрайт уже в движении, отменим задание
+    if (node->getActionByTag(1) != nullptr) {
+        node->stopActionByTag(1);
+    }
     Vec2 currPos = node->getPosition();
     float distance = currPos.distance(Vec2(x, y));
     auto calcAngle = [](Vec2 pos1, Vec2 pos2) { return atan2((pos2.y - pos1.y), (pos2.x - pos1.x)); };
@@ -568,10 +575,14 @@ void HelloWorld::moveUnitTo(Node* node, float x, float y) {
     log("time to reach: %f", moveTime);
     log("angle: %f", angle);
     auto moveTo = MoveTo::create(moveTime, Vec2(x, y));
-    
+    moveTo->setTag(1);
     node->runAction(moveTo);
     
     if (node->getName() == "playerUnit") {
+        // если спрайт уже в движении, отменим задание
+        if (node->getActionByTag(2) != nullptr) {
+            node->stopActionByTag(2);
+        }
         std::string animationType = "none";
         auto sprite = dynamic_cast<Sprite*>(node);
         if ((M_PI / 4 >= angle) && (angle >= -1 * M_PI / 4)) {
@@ -596,6 +607,7 @@ void HelloWorld::moveUnitTo(Node* node, float x, float y) {
         auto animate = Animate::create(animation);
         auto repeatAction = Sequence::create(animate, DelayTime::create(.0f), nullptr);
         auto repeatAnim = Repeat::create(repeatAction, animationRepeats);
+        repeatAnim->setTag(2);
         sprite->runAction(repeatAnim);
     }
 
